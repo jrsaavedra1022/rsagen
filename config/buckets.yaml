@@ -1,16 +1,8 @@
 buckets:
   dev:
-    cert_name: "file_dev.jks"
+    cert_name: "file_dev.p12"
     key_store_password: "1234"
-    public_key_password: "1234"
-    private_key_password: "1234"
-    public_key_alias: "alias-public"
-    private_key_alias: "alias-private"
 
   cer:
-    cert_name: "file_cer.jks"
+    cert_name: "file_cer.p12"
     key_store_password: "1234"
-    public_key_password: "1234"
-    private_key_password: "1234"
-    public_key_alias: "alias-public"
-    private_key_alias: "alias-private"

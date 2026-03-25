@@ -1,9 +1,5 @@
 class KeystoreError(Exception):
-    """Error al abrir o leer el keystore."""
-
-
-class KeyAliasError(Exception):
-    """Error al buscar alias dentro del keystore."""
+    """Error al abrir o leer el keystore PKCS#12."""
 
 
 class EncryptionError(Exception):

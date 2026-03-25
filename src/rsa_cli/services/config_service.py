@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
+
 import yaml
 
 from rsa_cli.models.bucket import Bucket
@@ -21,11 +24,12 @@ class ConfigService:
         if not bucket_data:
             raise ValueError(f"No existe configuración para el ambiente '{environment}'")
 
-        return Bucket(
-            cert_name=bucket_data["cert_name"],
-            key_store_password=bucket_data["key_store_password"],
-            public_key_password=bucket_data["public_key_password"],
-            private_key_password=bucket_data["private_key_password"],
-            public_key_alias=bucket_data["public_key_alias"],
-            private_key_alias=bucket_data["private_key_alias"],
-        )
+        try:
+            return Bucket(
+                cert_name=bucket_data["cert_name"],
+                key_store_password=bucket_data["key_store_password"],
+            )
+        except KeyError as exc:
+            raise ValueError(
+                f"Configuración inválida en ambiente '{environment}': falta '{exc.args[0]}'"
+            ) from exc
