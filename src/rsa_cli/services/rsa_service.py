@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 
 from cryptography.hazmat.primitives import hashes
@@ -5,7 +7,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 from rsa_cli.models.bucket import Bucket
 from rsa_cli.services.keystore_service import KeyStoreService
-from rsa_cli.utils.exceptions import EncryptionError
+from rsa_cli.utils.exceptions import EncryptionError, KeystoreError
 
 
 class RsaEncryptionService:
@@ -14,14 +16,19 @@ class RsaEncryptionService:
         self.keystore_service = keystore_service or KeyStoreService()
         self.private_key = None
         self.public_key = None
+        self.certificate = None
+        self.additional_certificates = ()
         self._init_keys()
 
     def _init_keys(self) -> None:
         try:
-            self.private_key = self.keystore_service.load_private_key(self.bucket)
-            self.public_key = self.keystore_service.load_public_key(self.bucket)
-        except Exception as exc:
-            raise EncryptionError("Error al cargar las llaves del certificado") from exc
+            material = self.keystore_service.load_material(self.bucket)
+            self.private_key = material.private_key
+            self.public_key = material.public_key
+            self.certificate = material.certificate
+            self.additional_certificates = material.additional_certificates
+        except KeystoreError as exc:
+            raise EncryptionError("Error al cargar llaves/certificado desde PKCS#12") from exc
 
     @staticmethod
     def _oaep_padding() -> padding.OAEP:
@@ -36,10 +43,7 @@ class RsaEncryptionService:
             raise EncryptionError("La llave pública no está cargada")
 
         try:
-            encrypted = self.public_key.encrypt(
-                message.encode("utf-8"),
-                self._oaep_padding(),
-            )
+            encrypted = self.public_key.encrypt(message.encode("utf-8"), self._oaep_padding())
             return base64.b64encode(encrypted).decode("utf-8")
         except Exception as exc:
             raise EncryptionError("Error cifrando el mensaje") from exc
@@ -50,10 +54,7 @@ class RsaEncryptionService:
 
         try:
             encrypted_bytes = base64.b64decode(encrypted_message_base64)
-            decrypted = self.private_key.decrypt(
-                encrypted_bytes,
-                self._oaep_padding(),
-            )
+            decrypted = self.private_key.decrypt(encrypted_bytes, self._oaep_padding())
             return decrypted.decode("utf-8")
         except Exception as exc:
             raise EncryptionError("Error descifrando el mensaje") from exc
